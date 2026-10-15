@@ -1,6 +1,6 @@
-import { pt, meta, runtime } from './i18n.js?v=6';
-import { startScene } from './scene.js?v=6';
-import { initTnt } from './tnt.js?v=6';
+import { pt, meta, runtime } from './i18n.js?v=7';
+import { startScene } from './scene.js?v=7';
+import { initTnt } from './tnt.js?v=7';
 
 const root = document.documentElement;
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -57,6 +57,10 @@ function applyStrings(lang) {
   const group = $('.lang');
   if (group) group.dataset.active = lang;
   for (const btn of $$('[data-lang]')) btn.setAttribute('aria-pressed', String(btn.dataset.lang === lang));
+  for (const el of $$('[data-date]')) {
+    const d = new Date(`${el.dataset.date}T12:00:00Z`);
+    el.textContent = d.toLocaleDateString(lang === 'pt' ? 'pt-BR' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
   renderLive();
 }
 

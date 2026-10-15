@@ -172,7 +172,8 @@ ul { list-style: none; padding: 0; }
   border: 1px solid var(--line-2);
   border-bottom: 0;
   background:
-    radial-gradient(circle at 82% 26%, rgba(255, 255, 255, 0.5) 0 3%, transparent 3.4%),
+    linear-gradient(#fffbe0, #fffbe0) 84% 22% / 20px 20px no-repeat,
+    linear-gradient(rgba(255, 246, 190, 0.35), rgba(255, 246, 190, 0.35)) calc(84% + 2px) calc(22% - 1px) / 32px 32px no-repeat,
     linear-gradient(180deg, #3d6a9c 0%, #6d98c4 70%, #8fb4d8 100%);
 }
 .scene__canvas {
@@ -252,25 +253,7 @@ ul { list-style: none; padding: 0; }
   background: var(--bg);
   border: 1px solid var(--line);
 }
-.badge-tip { position: relative; }
-.badge-tip img { width: 22px; height: 22px; }
-.badge-tip__label {
-  position: absolute;
-  bottom: calc(100% + 10px);
-  right: -6px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  background: var(--text);
-  color: var(--bg);
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
-  opacity: 0;
-  transform: translateY(4px);
-  transition: opacity 0.2s ease, transform 0.3s var(--ease);
-  pointer-events: none;
-}
-.badge-tip:hover .badge-tip__label { opacity: 1; transform: none; }
+.profile__badges img { width: 22px; height: 22px; }
 .profile__name { margin-top: 12px; font-size: 1.45rem; font-weight: 600; letter-spacing: -0.03em; }
 .profile__handle { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--text-2); font-size: 14px; }
 .guild-tag {
@@ -286,6 +269,23 @@ ul { list-style: none; padding: 0; }
   color: var(--text);
 }
 .guild-tag img { width: 14px; height: 14px; }
+.profile__since {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+}
+.profile__since h3 {
+  margin-bottom: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.profile__since p { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-2); }
+.profile__since .icon { width: 16px; height: 16px; color: var(--muted); }
 .profile__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
 .profile__status { min-height: 1.4em; margin-top: 8px; font-family: var(--mono); font-size: 12px; color: var(--online); text-align: center; }
 

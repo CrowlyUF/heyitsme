@@ -31,9 +31,9 @@ const CREEPER_PAL = { g: '#5aa83a', G: '#447f2b', k: '#111111' };
 // Pickaxe in arm space (canvas pixels): origin at the shoulder, arm hanging along +y.
 const PICKAXE = (() => {
   const px = [];
-  for (let y = 10; y < 21; y++) for (const x of [-1, 0]) px.push([x, y, y % 3 ? '#7a5230' : '#5e3f24']);
-  for (let x = -7; x <= 6; x++) px.push([x, 21, '#cfd6d8'], [x, 22, x === -7 || x === 6 ? '#cfd6d8' : '#9aa3a6']);
-  for (const x of [-8, -7, 6, 7]) px.push([x, 23, '#9aa3a6']);
+  for (let y = 7; y < 17; y++) for (const x of [-1, 0]) px.push([x, y, y % 3 ? '#7a5230' : '#5e3f24']);
+  for (let x = -7; x <= 6; x++) px.push([x, 17, '#cfd6d8'], [x, 18, x === -7 || x === 6 ? '#cfd6d8' : '#9aa3a6']);
+  for (const x of [-8, -7, 6, 7]) px.push([x, 19, '#9aa3a6']);
   return px;
 })();
 
@@ -130,6 +130,12 @@ function skinFromImage(img) {
 
 /* drawing helpers */
 
+// Squashed proportions: keep the 8x8 head, drop rows from the body, arms and legs.
+const TORSO_ROWS = [0, 1, 3, 4, 6, 7, 9, 11];
+const LEG_ROWS = [0, 2, 4, 7, 9, 11];
+const HEIGHT = 8 + TORSO_ROWS.length + LEG_ROWS.length;
+const rows = (tex, pick) => pick.map((i) => tex[i]);
+
 const easeOut = (t) => 1 - Math.pow(1 - t, 3);
 const clamp01 = (t) => Math.max(0, Math.min(1, t));
 
@@ -216,7 +222,7 @@ export function startScene(canvas, { onDeath, onTags, reduceMotion, skins = {} }
     img.src = src;
   }
 
-  onTags?.(miners.map((m) => ({ name: m.name, x: (m.x + 8) / W, y: (GROUND - 32 - 4) / H })), true);
+  onTags?.(miners.map((m) => ({ name: m.name, x: (m.x + 8) / W, y: (GROUND - HEIGHT - 4) / H })), true);
 
   let particles = [];
   let exploded = false;
@@ -261,17 +267,18 @@ export function startScene(canvas, { onDeath, onTags, reduceMotion, skins = {} }
   }
 
   function minerPixels(m, t) {
-    const top = GROUND - 32;
+    const top = GROUND - HEIGHT;
+    const legTop = top + 8 + TORSO_ROWS.length;
     const sk = m.skin;
     const px = [];
-    grid(sk.armR, m.x, top + 8, px);
-    grid(sk.legR, m.x + 4, top + 20, px);
-    grid(sk.legL, m.x + 8, top + 20, px);
-    grid(sk.body, m.x + 4, top + 8, px);
+    grid(rows(sk.armR, TORSO_ROWS), m.x, top + 8, px);
+    grid(rows(sk.legR, LEG_ROWS), m.x + 4, legTop, px);
+    grid(rows(sk.legL, LEG_ROWS), m.x + 8, legTop, px);
+    grid(rows(sk.body, TORSO_ROWS), m.x + 4, top + 8, px);
     grid(sk.head, m.x + 4, top, px);
     // Swinging arm (the one facing the block) with the pickaxe.
     const arm = [];
-    sk.armL.forEach((row, y) => row.forEach((c, x) => c && arm.push([x - 2, y, c])));
+    rows(sk.armL, TORSO_ROWS).forEach((row, y) => row.forEach((c, x) => c && arm.push([x - 2, y, c])));
     const angle = t < 6 ? swingAngle(t + m.phase) : -0.3;
     return px.concat(armSpace(arm.concat(PICKAXE), m.x + 14, top + 9, angle));
   }

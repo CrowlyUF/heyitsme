@@ -27,6 +27,7 @@ export const pt = {
   'profile.badgesLabel': 'Insígnias do Discord',
   'profile.open': 'Abrir perfil',
   'profile.copy': 'Copiar usuário',
+  'profile.since': 'Membro desde',
 
   'cta.label': 'Veja o que eu faço',
 

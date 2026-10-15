@@ -28,7 +28,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Silkscreen:wght@400;700&display=swap">
-  <link rel="stylesheet" href="assets/css/main.css?v=6">
+  <link rel="stylesheet" href="assets/css/main.css?v=7">
 
   <script>
     (function (d) {
@@ -36,7 +36,7 @@
       setTimeout(function () { if (!window.__crowlyReady) d.classList.remove('js'); }, 3000);
     })(document.documentElement);
   </script>
-  <script type="module" src="assets/js/main.js?v=6"></script>
+  <script type="module" src="assets/js/main.js?v=7"></script>
 </head>
 <body>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -89,10 +89,10 @@
               <img src="assets/img/discord/crowly-avatar.webp" alt="crowly.md's Discord avatar" width="256" height="256" decoding="async" data-i18n-attr="alt:profile.avatarAlt">
             </div>
             <ul class="profile__badges" aria-label="Discord badges" data-i18n-attr="aria-label:profile.badgesLabel">
-              <li class="badge-tip">
-                <img src="assets/img/discord/badge-hypesquad-bravery.png" alt="HypeSquad Bravery" width="22" height="22" decoding="async">
-                <span class="badge-tip__label" role="tooltip">HypeSquad Bravery</span>
-              </li>
+              <li><img src="assets/img/discord/badge-1.png" alt="" width="22" height="22" decoding="async"></li>
+              <li><img src="assets/img/discord/badge-2.png" alt="" width="22" height="22" decoding="async"></li>
+              <li><img src="assets/img/discord/badge-3.png" alt="" width="22" height="22" decoding="async"></li>
+              <li><img src="assets/img/discord/badge-4.png" alt="" width="22" height="22" decoding="async"></li>
             </ul>
 
             <h2 class="profile__name" id="profile-name">Crowly</h2>
@@ -102,6 +102,14 @@
                 <img src="assets/img/discord/tag-ccw.png" alt="" width="14" height="14" decoding="async">CCW
               </span>
             </p>
+
+            <div class="profile__since">
+              <h3 data-i18n="profile.since">Member since</h3>
+              <p>
+                <svg class="icon icon--fill" aria-hidden="true"><use href="#i-discord"/></svg>
+                <time datetime="2017-06-13" data-date="2017-06-13">Jun 13, 2017</time>
+              </p>
+            </div>
 
             <div class="profile__actions">
               <a class="btn btn--discord" href="https://discord.com/users/324150661367463936" target="_blank" rel="noopener noreferrer">
