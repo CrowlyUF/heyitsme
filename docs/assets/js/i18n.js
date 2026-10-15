@@ -55,7 +55,7 @@ export const runtime = {
     copied: 'Copied. Paste it into Discord’s “Add Friend”.',
     copyFailed: 'Couldn’t copy. The username is crowly.md',
     copyDone: 'Copied',
-    deaths: ['crowly was blown up by Creeper', 'Steve was blown up by Creeper'],
+    death: (name) => `${name} was blown up by Creeper`,
   },
   pt: {
     members: (m, o) => `${m} membros · ${o} online`,
@@ -63,6 +63,6 @@ export const runtime = {
     copied: 'Copiado. Cole em “Adicionar amigo” no Discord.',
     copyFailed: 'Não deu para copiar. O usuário é crowly.md',
     copyDone: 'Copiado',
-    deaths: ['crowly foi explodido por Creeper', 'Steve foi explodido por Creeper'],
+    death: (name) => `${name} foi explodido por Creeper`,
   },
 };

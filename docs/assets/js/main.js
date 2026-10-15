@@ -1,10 +1,13 @@
-import { pt, meta, runtime } from './i18n.js?v=4';
-import { startScene } from './scene.js?v=4';
-import { initTnt } from './tnt.js?v=4';
+import { pt, meta, runtime } from './i18n.js?v=6';
+import { startScene } from './scene.js?v=6';
+import { initTnt } from './tnt.js?v=6';
 
 const root = document.documentElement;
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const LANG_KEY = 'crowlyac.lang';
+const SKINS = {
+  // '4ever': 'assets/img/skins/4ever.png',
+};
 const state = { lang: 'en', live: {} };
 
 const $ = (sel, ctx = document) => ctx.querySelector(sel);
@@ -83,14 +86,30 @@ function initI18n() {
 function initScene() {
   const canvas = $('[data-scene]');
   const chat = $('[data-scene-chat]');
+  const tags = $('[data-scene-tags]');
   if (!canvas) return;
   startScene(canvas, {
     reduceMotion,
-    onDeath() {
+    // Drop a standard Minecraft skin PNG here to replace a placeholder look.
+    skins: SKINS,
+    onTags(list, visible) {
+      if (!tags) return;
+      if (list) {
+        tags.replaceChildren(...list.map((t) => {
+          const tag = document.createElement('span');
+          tag.textContent = t.name;
+          tag.style.left = `${t.x * 100}%`;
+          tag.style.top = `${t.y * 100}%`;
+          return tag;
+        }));
+      }
+      tags.classList.toggle('is-hidden', !visible);
+    },
+    onDeath(names) {
       if (!chat) return;
-      chat.replaceChildren(...runtime[state.lang].deaths.map((text) => {
+      chat.replaceChildren(...names.map((name) => {
         const line = document.createElement('span');
-        line.textContent = text;
+        line.textContent = runtime[state.lang].death(name);
         return line;
       }));
     },
@@ -138,7 +157,7 @@ async function initLive() {
     .then((d) => ({ members: d.approximate_member_count, online: d.approximate_presence_count }));
   const jobs = {
     crackcrew: invite('crackcrew'),
-    revolt: invite('7FDPg6uU4'),
+    revolt: invite('Fgu4vP3vQz'),
     'crewx-stars': fetchJSON('https://api.github.com/repos/4everdies/CrewX').then((d) => d.stargazers_count),
   };
   const keys = Object.keys(jobs);
