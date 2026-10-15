@@ -432,6 +432,7 @@ ul { list-style: none; padding: 0; }
 .card__body { display: flex; flex: 1; flex-direction: column; gap: 14px; padding: 0 22px 22px; }
 .card__name { font-size: 1.35rem; font-weight: 600; letter-spacing: -0.03em; line-height: 1.15; }
 .card__desc { color: var(--text-2); font-size: 15px; }
+.card__desc b { color: var(--text); font-weight: 600; }
 .card__foot {
   display: flex;
   flex-wrap: wrap;

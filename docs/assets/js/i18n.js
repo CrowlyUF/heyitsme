@@ -40,9 +40,7 @@ export const pt = {
   'wid.rvBannerAlt': 'Banner do servidor Revolt',
   'wid.rvDesc': 'Uma comunidade de Roblox com um fórum próprio de scripting.',
   'wid.join': 'Entrar',
-  'wid.crewxDesc':
-    'Um client de Minecraft 1.8.9 para servidores brasileiros como MushMC, Hylex e Kaizen. 99 módulos, scripts em Lua e um player de mídia com letra sincronizada.',
-  'wid.tech': 'Tecnologias',
+  'wid.crewxDesc': 'Um client de cheat para Minecraft 1.8.9 com 90 módulos. A galera conhece mais como <b>#CCW</b>. Criado por mim e pelo 4ever.',
   'wid.repo': 'Repositório',
   'wid.ghAvatarAlt': 'Avatar de CrowlyUF no GitHub',
   'wid.ghDesc': 'Meu GitHub, onde fica o meu código.',
