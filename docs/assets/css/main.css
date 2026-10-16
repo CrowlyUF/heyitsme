@@ -171,10 +171,7 @@ ul { list-style: none; padding: 0; }
   overflow: hidden;
   border: 1px solid var(--line-2);
   border-bottom: 0;
-  background:
-    linear-gradient(#fffbe0, #fffbe0) 84% 22% / 20px 20px no-repeat,
-    linear-gradient(rgba(255, 246, 190, 0.35), rgba(255, 246, 190, 0.35)) calc(84% + 2px) calc(22% - 1px) / 32px 32px no-repeat,
-    linear-gradient(180deg, #3d6a9c 0%, #6d98c4 70%, #8fb4d8 100%);
+  background: #141210;
 }
 .scene__canvas {
   width: 100%;

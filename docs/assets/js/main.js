@@ -1,6 +1,6 @@
-import { pt, meta, runtime } from './i18n.js?v=8';
-import { startScene } from './scene.js?v=8';
-import { initTnt } from './tnt.js?v=8';
+import { pt, meta, runtime } from './i18n.js?v=9';
+import { startScene } from './scene.js?v=9';
+import { initTnt } from './tnt.js?v=9';
 
 const root = document.documentElement;
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -99,13 +99,20 @@ function initScene() {
     onTags(list, visible) {
       if (!tags) return;
       if (list) {
-        tags.replaceChildren(...list.map((t) => {
-          const tag = document.createElement('span');
-          tag.textContent = t.name;
-          tag.style.left = `${t.x * 100}%`;
-          tag.style.top = `${t.y * 100}%`;
-          return tag;
-        }));
+        if (tags.children.length !== list.length) {
+          tags.replaceChildren(...list.map((t) => {
+            const tag = document.createElement('span');
+            tag.textContent = t.name;
+            return tag;
+          }));
+        }
+        list.forEach((t, i) => {
+          const tag = tags.children[i];
+          const left = `${(t.x * 100).toFixed(2)}%`;
+          const top = `${(t.y * 100).toFixed(2)}%`;
+          if (tag.style.left !== left) tag.style.left = left;
+          if (tag.style.top !== top) tag.style.top = top;
+        });
       }
       tags.classList.toggle('is-hidden', !visible);
     },
