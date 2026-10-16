@@ -200,19 +200,20 @@ function swingAngle(t) {
 /* scene */
 
 // The story, in seconds:
-//  0.0  crowly mines the stone wall, 4ever crafts at the table
-//  2.4  stone breaks, diamond ore behind it
-//  4.4  diamond ore breaks, crowly picks the diamond up
-//  4.9  walks back to 4ever
-//  7.1  shows him the diamond, then both jump around
-//  8.6  a creeper fades in out of the dark behind them
-// 11.0  boom
-const LOOP = 13.8;
-const T = { stoneBreak: 2.4, oreBreak: 4.4, pickup: 4.9, walkEnd: 7.1, jump: 7.7, creeperIn: 8.6, creeperStop: 9.8, hiss: 9.8, boom: 11.0, poof: 12.2 };
+//  0.0  crowly mines the stone, 4ever crafts at the table
+//  1.0  stone breaks, diamond ore behind it
+//  2.2  diamond ore breaks, crowly grabs the diamond
+//  2.6  runs back to 4ever, shows it, both jump around
+//  5.0  a creeper walks out of the tunnel on the ledge, drops down and walks over
+//  9.0  boom, then everything they carried drops on the floor
+const LOOP = 12.8;
+const T = {
+  stoneBreak: 1.0, oreBreak: 2.2, pickup: 2.6, walkEnd: 4.4, jump: 4.8,
+  creeperOut: 5.0, ledgeEdge: 6.2, land: 6.55, creeperStop: 8.0, hiss: 8.0, boom: 9.0, poof: 10.0,
+};
 const BLAST = { x: 116, y: 64 };
 
 const DEEP = ['#3b3a39', '#343332', '#413f3e', '#2e2d2c'];
-const ORE = { pal: STONE, specks: [[1, 1], [2, 1], [5, 2], [6, 3], [2, 4], [3, 5], [5, 6], [6, 6], [1, 6]] };
 const TABLE = {
   rows: ['tTtTtTtT', 'pppppppp', 'pkkpppbp', 'pkppppbp', 'pppppbbp', 'pppppppp', 'dpdpdpdp', 'dddddddd'],
   pal: { t: '#c09a5b', T: '#9c7840', p: '#9a6b3f', k: '#5a5a5a', b: '#6e4a2a', d: '#6b4a2b' },
@@ -221,19 +222,25 @@ const DIAMOND = {
   rows: ['...cc...', '..cCCc..', '.cCwCCc.', 'cCwCCCCc', '.cCCCCc.', '..cCCc..', '...cc...'],
   pal: { c: '#1fa6a8', C: '#5fe8ea', w: '#e8ffff' },
 };
-const ICONS = [
-  { rows: ['......ww', '.....wCw', '....wCw.', '.w.wCw..', '..wCw...', '..bw....', '.b..w...', 'b.......'], pal: { w: '#e6e6e6', C: '#a8a8a8', b: '#7a5230' } },
-  { rows: ['.cccc...', 'c...bc..', '....b.c.', '...b..c.', '..b.....', '.b......', 'b.......'], pal: { c: '#b9c0c2', b: '#7a5230' } },
-];
-const TORCHES = [{ x: 22, y: 34 }, { x: 160, y: 30 }];
+const SWORD = { rows: ['......ww', '.....wCw', '....wCw.', '.w.wCw..', '..wCw...', '..bw....', '.b..w...', 'b.......'], pal: { w: '#e6e6e6', C: '#a8a8a8', b: '#7a5230' } };
+const PICK = { rows: ['.cccc...', 'c...bc..', '....b.c.', '...b..c.', '..b.....', '.b......', 'b.......'], pal: { c: '#b9c0c2', b: '#7a5230' } };
+const ICONS = [SWORD, PICK];
+const ORES = {
+  iron: ['#d8af93', '#e8c9b0', '#b88f73'],
+  coal: ['#1c1c1c', '#2a2a2a', '#111111'],
+  gold: ['#f5d94a', '#fcee7a', '#c9a227'],
+  redstone: ['#c41515', '#ff3a3a', '#8f0d0d'],
+  diamond: ['#5decf5', '#2bc7c9', '#d5ffff'],
+};
+const TORCHES = [{ x: 22, y: 34 }, { x: 150, y: 30 }];
 
 const CRAFTER = { x: 40 };
 const TABLE_X = 60;
-const MINE_X = 190;
+const MINE_X = 178;
 const HOME_X = 82;
-const TARGET = { x: 208, y: 64 };
+const TARGET = { x: 196, y: 64 };
+const LEDGE = { x: 224, y: 48 };
 
-// Diamond in arm space: held at the hand.
 const HELD_DIAMOND = (() => {
   const px = [];
   DIAMOND.rows.forEach((row, y) => [...row].forEach((ch, x) => DIAMOND.pal[ch] && px.push([x - 4, y + 6, DIAMOND.pal[ch]])));
@@ -244,6 +251,24 @@ function smallSprite(rows, pal, x, y) {
   const out = [];
   rows.forEach((row, j) => [...row].forEach((ch, i) => pal[ch] && out.push([x + i, y + j, pal[ch]])));
   return out;
+}
+
+function oreTexture(seed, kind) {
+  const tex = texture(seed, STONE).slice();
+  const r = noise(seed * 7 + 1);
+  const specks = ORES[kind];
+  for (let k = 0; k < 9; k++) {
+    const i = 1 + Math.floor(r() * 6);
+    const j = 1 + Math.floor(r() * 6);
+    tex[j * 8 + i] = specks[k % specks.length];
+    if (k % 3 === 0) tex[j * 8 + i + 1] = specks[(k + 1) % specks.length];
+  }
+  return tex;
+}
+
+// An 8x8 texture as a tiny 8px item (for drops).
+function blockIcon(tex) {
+  return { rows: Array.from({ length: 8 }, (_, j) => tex.slice(j * 8, j * 8 + 8)) };
 }
 
 export function startScene(canvas, { onDeath, onTags, reduceMotion, skins = {} } = {}) {
@@ -262,6 +287,11 @@ export function startScene(canvas, { onDeath, onTags, reduceMotion, skins = {} }
     img.src = src;
   }
 
+  const stoneTex = texture(1, STONE);
+  const oreTex = oreTexture(5, 'diamond');
+  const ironTex = oreTexture(41, 'iron');
+  const tableTex = TABLE.rows.flatMap((row) => [...row].map((ch) => TABLE.pal[ch]));
+
   // Static cave, drawn once.
   const bg = document.createElement('canvas');
   bg.width = W;
@@ -279,21 +309,42 @@ export function startScene(canvas, { onDeath, onTags, reduceMotion, skins = {} }
       b.fillRect(x, y, 16, 16);
     }
   };
+  const ORE_AT = {
+    '32,0': 'coal', '112,0': 'iron', '176,0': 'gold', '48,16': 'iron', '208,16': 'coal',
+    '224,64': 'iron', '240,64': 'redstone', '32,80': 'iron', '144,80': 'coal', '96,48': 'coal', '176,32': 'iron',
+  };
   let seed = 300;
-  for (let y = 0; y < H; y += 16) for (let x = 0; x < W; x += 16) tile(x, y, texture(seed++, DEEP), 0.15);
-  const CEILING = [1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1];
+  const pick = (x, y, fallback) => (ORE_AT[`${x},${y}`] ? oreTexture(seed++, ORE_AT[`${x},${y}`]) : texture(seed++, fallback));
+
+  for (let y = 0; y < H; y += 16) for (let x = 0; x < W; x += 16) tile(x, y, pick(x, y, DEEP), 0.2);
+  const CEILING = [1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1];
   for (let x = 0; x < W; x += 16) {
-    tile(x, 0, texture(seed++, STONE), 0.25);
-    if (CEILING[x / 16]) tile(x, 16, texture(seed++, STONE), 0.3);
+    tile(x, 0, pick(x, 0, STONE), 0.25);
+    if (CEILING[x / 16]) tile(x, 16, pick(x, 16, STONE), 0.3);
   }
-  for (let x = 0; x < W; x += 16) tile(x, GROUND, texture(seed++, STONE), 0.1);
-  b.fillStyle = 'rgba(255,255,255,0.1)';
-  b.fillRect(0, GROUND, 208, 1);
-  for (let y = 16; y < GROUND; y += 16) for (let x = 224; x < W; x += 16) tile(x, y, texture(seed++, STONE), 0.1);
-  for (let y = 16; y < 64; y += 16) tile(208, y, texture(seed++, STONE), 0.1);
+  for (let x = 0; x < W; x += 16) tile(x, GROUND, pick(x, GROUND, STONE), 0.1);
+  // Right wall with a ledge and a dark tunnel above it.
+  for (let y = 32; y < GROUND; y += 16) for (let x = LEDGE.x; x < W; x += 16) tile(x, y, pick(x, y, STONE), 0.1);
+  // Tunnel: the same rock, deep in shadow, getting darker further in.
+  b.save();
+  b.beginPath();
+  b.rect(LEDGE.x + 8, 20, W - LEDGE.x - 8, LEDGE.y - 20);
+  b.clip();
+  for (let y = 16; y < LEDGE.y; y += 16) for (let x = LEDGE.x; x < W; x += 16) tile(x, y, texture(seed++, DEEP), 0.45);
+  const tg = b.createLinearGradient(LEDGE.x + 8, 0, W, 0);
+  tg.addColorStop(0, 'rgba(0,0,0,0)');
+  tg.addColorStop(1, 'rgba(0,0,0,0.55)');
+  b.fillStyle = tg;
+  b.fillRect(LEDGE.x + 8, 20, W - LEDGE.x - 8, LEDGE.y - 20);
+  b.restore();
+  b.fillStyle = 'rgba(0,0,0,0.5)';
+  b.fillRect(LEDGE.x + 8, 20, W - LEDGE.x - 8, 2);
+  b.fillStyle = 'rgba(255,255,255,0.12)';
+  b.fillRect(LEDGE.x, LEDGE.y, W - LEDGE.x, 1);
+  b.fillRect(0, GROUND, LEDGE.x, 1);
   for (let j = 0; j < 8; j++) {
     for (let i = 0; i < 8; i++) {
-      b.fillStyle = TABLE.pal[TABLE.rows[j][i]];
+      b.fillStyle = tableTex[j * 8 + i];
       b.fillRect(TABLE_X + i * S, GROUND - 16 + j * S, S, S);
     }
   }
@@ -304,17 +355,19 @@ export function startScene(canvas, { onDeath, onTags, reduceMotion, skins = {} }
     b.fillRect(t.x + 1, t.y + 4, 1, 9);
   }
 
-  const stoneTex = texture(1, STONE);
-  const oreTex = texture(1, ORE.pal).slice();
-  const speck = ['#5decf5', '#2bc7c9', '#d5ffff'];
-  ORE.specks.forEach(([i, j], k) => { oreTex[j * 8 + i] = speck[k % 3]; });
-
   const dark = document.createElement('canvas');
   dark.width = W;
   dark.height = H;
   const d = dark.getContext('2d');
 
+  // What each of them drops when they die.
+  const LOOT = {
+    crowly: [DIAMOND, DIAMOND, PICK, blockIcon(stoneTex), blockIcon(ironTex), DIAMOND],
+    '4ever': [SWORD, PICK, blockIcon(tableTex), blockIcon(stoneTex), blockIcon(ironTex)],
+  };
+
   let particles = [];
+  let drops = [];
   let fired = {};
 
   function put(pixels, tint, alpha = 1) {
@@ -350,12 +403,21 @@ export function startScene(canvas, { onDeath, onTags, reduceMotion, skins = {} }
     }
   }
 
-  // A character's pixels at position x, jump height jy, arm angle and held item.
+  function dropLoot(name, x) {
+    for (const item of LOOT[name]) {
+      drops.push({
+        item, x: x + Math.random() * 8 - 4, y: GROUND - 20,
+        vx: (Math.random() - 0.5) * 70, vy: -50 - Math.random() * 50,
+        phase: Math.random() * 6, settled: false,
+      });
+    }
+  }
+
   function personPixels(p, x, jy, angle, held, walking, t) {
     const top = GROUND - HEIGHT - jy;
     const legTop = top + 8 + TORSO_ROWS.length;
     const sk = p.skin;
-    const step = walking ? Math.floor(t * 8) % 2 : -1;
+    const step = walking ? Math.floor(t * 10) % 2 : -1;
     const px = [];
     grid(rows(sk.armR, TORSO_ROWS), x, top + 8, px);
     grid(rows(sk.legR, LEG_ROWS), x + 4, legTop - (step === 0 ? 1 : 0), px);
@@ -369,38 +431,50 @@ export function startScene(canvas, { onDeath, onTags, reduceMotion, skins = {} }
 
   function hop(t, start) {
     if (t < start) return 0;
-    return Math.round(Math.abs(Math.sin(((t - start) / 0.45) * Math.PI)) * 7);
+    return Math.round(Math.abs(Math.sin(((t - start) / 0.42) * Math.PI)) * 7);
+  }
+
+  // Creeper path: out of the tunnel, along the ledge, drop, walk over.
+  function creeperAt(t) {
+    if (t < T.ledgeEdge) {
+      const k = (t - T.creeperOut) / (T.ledgeEdge - T.creeperOut);
+      return { x: W + 2 - (W + 2 - (LEDGE.x - 6)) * k, feet: LEDGE.y, walking: true };
+    }
+    if (t < T.land) {
+      const k = (t - T.ledgeEdge) / (T.land - T.ledgeEdge);
+      return { x: LEDGE.x - 6 - 10 * k, feet: LEDGE.y + (GROUND - LEDGE.y) * k * k, walking: false };
+    }
+    const k = clamp01((t - T.land) / (T.creeperStop - T.land));
+    return { x: LEDGE.x - 16 - (LEDGE.x - 16 - (BLAST.x - 6)) * k, feet: GROUND, walking: k < 1 };
   }
 
   function frame(t, dt) {
-    if (t < (fired.t ?? 0)) { fired = {}; particles = []; }
+    if (t < (fired.t ?? 0)) { fired = {}; particles = []; drops = []; }
     fired.t = t;
     const once = (key) => (fired[key] ? false : (fired[key] = true));
 
     ctx.clearRect(0, 0, W, H);
     ctx.drawImage(bg, 0, 0);
 
-    // Wall block: stone, then diamond ore, then a hole.
-    if (t < T.stoneBreak) drawTarget(stoneTex, Math.min(3, Math.floor(t / 0.6)));
-    else if (t < T.oreBreak) drawTarget(oreTex, Math.min(3, Math.floor((t - T.stoneBreak) / 0.5)));
+    if (t < T.stoneBreak) drawTarget(stoneTex, Math.min(3, Math.floor(t / 0.25)));
+    else if (t < T.oreBreak) drawTarget(oreTex, Math.min(3, Math.floor((t - T.stoneBreak) / 0.3)));
     if (t >= T.stoneBreak && once('stone')) burst(TARGET.x + 8, TARGET.y + 8, STONE, 18, 40);
     if (t >= T.oreBreak && once('ore')) burst(TARGET.x + 8, TARGET.y + 8, ['#5decf5', '#8b8b8b', '#7c7c7c', '#d5ffff'], 20, 40);
 
     const dead = t >= T.boom;
 
-    // crowly: position, arm and what's in hand.
     let cx = MINE_X;
-    let cAngle = swingAngle(t);
+    let cAngle = swingAngle(t * 1.4);
     let cHeld = PICKAXE;
     let walking = false;
     if (t >= T.oreBreak) {
       cAngle = -0.4;
-      cHeld = t >= T.pickup ? HELD_DIAMOND : null;
+      cHeld = t >= T.pickup ? HELD_DIAMOND : PICKAXE;
     }
     if (t >= T.pickup && t < T.walkEnd) {
       const k = (t - T.pickup) / (T.walkEnd - T.pickup);
       cx = Math.round(MINE_X + (HOME_X - MINE_X) * k);
-      cAngle = -0.35 + Math.sin(t * 12) * 0.35;
+      cAngle = -0.35 + Math.sin(t * 14) * 0.35;
       walking = true;
     } else if (t >= T.walkEnd) {
       cx = HOME_X;
@@ -408,21 +482,18 @@ export function startScene(canvas, { onDeath, onTags, reduceMotion, skins = {} }
     }
     const cJump = dead ? 0 : hop(t, T.jump);
 
-    // 4ever: crafting until crowly is back, then celebrating.
     let fAngle = -1.25 + Math.sin(t * 18) * 0.35;
     if (t >= T.walkEnd) fAngle = t >= T.jump ? -2.4 + Math.sin(t * 14) * 0.4 : -0.5;
     const fJump = dead ? 0 : hop(t, T.jump + 0.2);
 
-    // Crafted tools popping out of the table.
     if (t < T.walkEnd) {
-      const k = (t % 1.6) / 1.1;
+      const k = (t % 1.3) / 0.9;
       if (k < 1) {
-        const icon = ICONS[Math.floor(t / 1.6) % ICONS.length];
+        const icon = ICONS[Math.floor(t / 1.3) % ICONS.length];
         put(smallSprite(icon.rows, icon.pal, TABLE_X + 4, GROUND - 22 - Math.round(k * 12)), null, 1 - k);
       }
     }
 
-    // Diamond item: pops out, bobs, then flies to crowly.
     if (t >= T.oreBreak && t < T.pickup) {
       const k = (t - T.oreBreak) / (T.pickup - T.oreBreak);
       const ix = Math.round(TARGET.x + 4 + (MINE_X + 14 - TARGET.x - 4) * easeOut(k));
@@ -430,20 +501,18 @@ export function startScene(canvas, { onDeath, onTags, reduceMotion, skins = {} }
       put(smallSprite(DIAMOND.rows, DIAMOND.pal, ix, iy));
     }
 
-    // Creeper fades in from the dark behind them.
-    if (t >= T.creeperIn && t < T.boom) {
-      const walk = clamp01((t - T.creeperIn) / (T.creeperStop - T.creeperIn));
-      const x = Math.round((BLAST.x + 10 - 10 * walk - 6) / S) * S;
-      const legs = CREEPER_LEGS[walk < 1 ? Math.floor(t * 6) % 2 : 0];
+    if (t >= T.creeperOut && t < T.boom) {
+      const c = creeperAt(t);
+      const x = Math.round(c.x / S) * S;
+      const legs = CREEPER_LEGS[c.walking ? Math.floor(t * 6) % 2 : 0];
       const body = CREEPER.concat(legs);
-      let px = spriteScaled(body, CREEPER_PAL, x, GROUND - body.length * S);
+      let px = spriteScaled(body, CREEPER_PAL, x, Math.round(c.feet) - body.length * S);
       const hiss = t >= T.hiss;
       if (hiss) px = transform(px, x + 6, GROUND, 0, 1 + 0.18 * clamp01((t - T.hiss) / (T.boom - T.hiss)));
-      put(px, null, clamp01((t - T.creeperIn) / 0.9));
+      put(px);
       if (hiss && Math.floor(t / 0.13) % 2 === 0) put(px, 'rgba(255,255,255,0.8)');
     }
 
-    // The two of them.
     if (t < T.poof) {
       const actors = [
         { p: forever, px: personPixels(forever, CRAFTER.x, fJump, fAngle, null, false, t), x: CRAFTER.x },
@@ -454,17 +523,22 @@ export function startScene(canvas, { onDeath, onTags, reduceMotion, skins = {} }
         const k = t - T.boom;
         const dist = a.x + 8 - BLAST.x;
         const push = Math.sign(dist || -1) * Math.min(30, 900 / Math.max(10, Math.abs(dist)));
+        a.deadX = a.x + 8 + Math.round(push * easeOut(clamp01(k / 0.5)));
         const px = transform(a.px, a.x + 8, GROUND, (-Math.PI / 2) * easeOut(clamp01(k / 0.5)), 1,
           Math.round(push * easeOut(clamp01(k / 0.5))), -Math.round(10 * Math.sin(Math.PI * clamp01(k / 0.45))));
         put(px);
         if (k < 1) put(px, 'rgba(255,30,30,0.5)');
       }
+      fired.bodies = actors.map((a) => ({ name: a.p.name, x: a.deadX ?? a.x + 8 }));
       onTags?.(dead ? null : [
         { name: forever.name, x: (CRAFTER.x + 8) / W, y: (GROUND - HEIGHT - fJump - 3) / H },
         { name: crowly.name, x: (cx + 8) / W, y: (GROUND - HEIGHT - cJump - 3) / H },
       ], !dead);
     } else if (once('poof')) {
-      for (const x of [CRAFTER.x - 8, HOME_X - 12]) burst(x + 8, GROUND - 6, ['#f2f2f2', '#c9c9c9'], 16, 14);
+      for (const body of fired.bodies || []) {
+        burst(body.x - 8, GROUND - 6, ['#f2f2f2', '#c9c9c9'], 16, 14);
+        dropLoot(body.name, body.x - 8);
+      }
     }
 
     if (dead && once('boom')) {
@@ -472,13 +546,36 @@ export function startScene(canvas, { onDeath, onTags, reduceMotion, skins = {} }
       onDeath?.(people.map((p) => p.name));
     }
 
-    // Crater in the cave floor.
     if (dead) {
       ctx.fillStyle = '#161412';
       for (let y = GROUND; y < GROUND + 10; y += S) {
         const half = Math.floor(Math.sqrt(Math.max(0, 20 * 20 - ((y - GROUND) * 2.2) ** 2)));
         ctx.fillRect(Math.round((BLAST.x - half) / S) * S, y, Math.round((half * 2) / S) * S, S);
       }
+    }
+
+    // Dropped items: pop out, bounce, then bob like in the game.
+    const fade = clamp01((LOOP - t) / 0.6);
+    for (const it of drops) {
+      if (!it.settled) {
+        it.vy += 260 * dt;
+        it.x += it.vx * dt;
+        it.y += it.vy * dt;
+        const floor = GROUND - 10;
+        if (it.y >= floor) {
+          it.y = floor;
+          it.vx *= 0.5;
+          it.vy = -it.vy * 0.35;
+          if (Math.abs(it.vy) < 12) { it.settled = true; it.vy = 0; }
+        }
+        it.x = Math.max(2, Math.min(LEDGE.x - 10, it.x));
+      }
+      const bob = it.settled ? Math.round(Math.sin(t * 3 + it.phase) * 1.5) - 1 : 0;
+      const pal = it.item.pal;
+      const px = pal
+        ? smallSprite(it.item.rows, pal, Math.round(it.x), Math.round(it.y) + bob)
+        : it.item.rows.flatMap((row, j) => row.map((c, i) => [Math.round(it.x) + i, Math.round(it.y) + bob + j, c]));
+      put(px, null, fade);
     }
 
     particles = particles.filter((p) => (p.age += dt) < p.life);
@@ -493,7 +590,7 @@ export function startScene(canvas, { onDeath, onTags, reduceMotion, skins = {} }
     }
     ctx.globalAlpha = 1;
 
-    // Lighting: darkness everywhere except around the torches (and the blast).
+    // Lighting: darkness except around the torches (and the blast).
     d.globalCompositeOperation = 'source-over';
     d.clearRect(0, 0, W, H);
     d.fillStyle = 'rgba(8,6,12,0.52)';
@@ -511,7 +608,6 @@ export function startScene(canvas, { onDeath, onTags, reduceMotion, skins = {} }
     }
     ctx.drawImage(dark, 0, 0);
 
-    // Warm torch glow and flames on top.
     ctx.globalCompositeOperation = 'lighter';
     for (const l of lights.slice(0, TORCHES.length)) {
       const g = ctx.createRadialGradient(l.x, l.y, 0, l.x, l.y, l.r * 0.7);

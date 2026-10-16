@@ -1,6 +1,6 @@
-import { pt, meta, runtime } from './i18n.js?v=9';
-import { startScene } from './scene.js?v=9';
-import { initTnt } from './tnt.js?v=9';
+import { pt, meta, runtime } from './i18n.js?v=10';
+import { startScene } from './scene.js?v=10';
+import { initTnt } from './tnt.js?v=10';
 
 const root = document.documentElement;
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
