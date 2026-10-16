@@ -1,12 +1,12 @@
-import { pt, meta, runtime } from './i18n.js?v=10';
-import { startScene } from './scene.js?v=10';
-import { initTnt } from './tnt.js?v=10';
+import { pt, meta, runtime } from './i18n.js?v=11';
+import { startScene } from './scene.js?v=11';
+import { initTnt } from './tnt.js?v=11';
 
 const root = document.documentElement;
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const LANG_KEY = 'crowlyac.lang';
 const SKINS = {
-  // '4ever': 'assets/img/skins/4ever.png',
+  '4ever': 'assets/img/skins/4ever.png?v=1',
 };
 const state = { lang: 'en', live: {} };
 

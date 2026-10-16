@@ -2,6 +2,78 @@
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Sounds are synthesised on the fly; no audio files to load.
+let audio = null;
+function getAudio() {
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state === 'suspended') audio.resume();
+    return audio;
+  } catch {
+    return null;
+  }
+}
+
+function noiseBuffer(ac, seconds) {
+  const buf = ac.createBuffer(1, Math.floor(ac.sampleRate * seconds), ac.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  return buf;
+}
+
+function playFuse(seconds) {
+  const ac = getAudio();
+  if (!ac) return;
+  const src = ac.createBufferSource();
+  src.buffer = noiseBuffer(ac, seconds);
+  const hp = ac.createBiquadFilter();
+  hp.type = 'highpass';
+  hp.frequency.value = 3500;
+  const gain = ac.createGain();
+  const now = ac.currentTime;
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.06, now + 0.1);
+  gain.gain.setValueAtTime(0.06, now + seconds - 0.1);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + seconds);
+  src.connect(hp).connect(gain).connect(ac.destination);
+  src.start(now);
+}
+
+function playBoom() {
+  const ac = getAudio();
+  if (!ac) return;
+  const now = ac.currentTime;
+  const out = ac.createGain();
+  out.gain.value = 0.7;
+  const comp = ac.createDynamicsCompressor();
+  out.connect(comp).connect(ac.destination);
+
+  // Rumble: filtered noise that darkens as it fades.
+  const src = ac.createBufferSource();
+  src.buffer = noiseBuffer(ac, 2.2);
+  const lp = ac.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.setValueAtTime(2400, now);
+  lp.frequency.exponentialRampToValueAtTime(140, now + 1.6);
+  const ng = ac.createGain();
+  ng.gain.setValueAtTime(1, now);
+  ng.gain.exponentialRampToValueAtTime(0.001, now + 2.1);
+  src.connect(lp).connect(ng).connect(out);
+  src.start(now);
+
+  // Thump: a fast pitch drop for the punch.
+  const osc = ac.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(110, now);
+  osc.frequency.exponentialRampToValueAtTime(32, now + 0.5);
+  const og = ac.createGain();
+  og.gain.setValueAtTime(1, now);
+  og.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+  osc.connect(og).connect(out);
+  osc.start(now);
+  osc.stop(now + 0.75);
+}
+
 function explode(cx, cy) {
   const canvas = document.createElement('canvas');
   canvas.className = 'boom-canvas';
@@ -93,6 +165,7 @@ export function initTnt({ reduceMotion }) {
       return;
     }
 
+    getAudio(); // unlock audio inside the click
     const r = btn.getBoundingClientRect();
     const size = 72;
     const left = r.left + r.width / 2 - size / 2;
@@ -122,6 +195,7 @@ export function initTnt({ reduceMotion }) {
 
     // Fuse: blink white and swell, like the real thing.
     tnt.classList.add('is-lit');
+    playFuse(1.3);
     tnt.animate(
       [
         { transform: `translateY(${fallDist}px) scale(1)` },
@@ -139,6 +213,7 @@ export function initTnt({ reduceMotion }) {
     tnt.remove();
     btn.classList.add('is-gone');
 
+    playBoom();
     const flash = document.createElement('div');
     flash.className = 'boom-flash';
     document.body.append(flash);

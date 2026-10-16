@@ -200,18 +200,18 @@ function swingAngle(t) {
 /* scene */
 
 // The story, in seconds:
-//  0.0  crowly mines the stone, 4ever crafts at the table
-//  1.0  stone breaks, diamond ore behind it
+//  0.0  crowly mines a block out of the cave wall, 4ever crafts at the table
+//  1.0  the block breaks, there's diamond ore behind it
 //  2.2  diamond ore breaks, crowly grabs the diamond
 //  2.6  runs back to 4ever, shows it, both jump around
 //  5.0  a creeper walks out of the tunnel on the ledge, drops down and walks over
 //  9.0  boom, then everything they carried drops on the floor
 const LOOP = 12.8;
 const T = {
-  stoneBreak: 1.0, oreBreak: 2.2, pickup: 2.6, walkEnd: 4.4, jump: 4.8,
+  stoneBreak: 1.0, oreBreak: 2.2, pickup: 2.6, walkEnd: 4.6, jump: 5.0,
   creeperOut: 5.0, ledgeEdge: 6.2, land: 6.55, creeperStop: 8.0, hiss: 8.0, boom: 9.0, poof: 10.0,
 };
-const BLAST = { x: 116, y: 64 };
+const BLAST = { x: 192, y: 64 };
 
 const DEEP = ['#3b3a39', '#343332', '#413f3e', '#2e2d2c'];
 const TABLE = {
@@ -232,13 +232,13 @@ const ORES = {
   redstone: ['#c41515', '#ff3a3a', '#8f0d0d'],
   diamond: ['#5decf5', '#2bc7c9', '#d5ffff'],
 };
-const TORCHES = [{ x: 22, y: 34 }, { x: 150, y: 30 }];
+const TORCHES = [{ x: 64, y: 34 }, { x: 200, y: 30 }];
 
-const CRAFTER = { x: 40 };
-const TABLE_X = 60;
-const MINE_X = 178;
-const HOME_X = 82;
-const TARGET = { x: 196, y: 64 };
+const CRAFTER = { x: 120 };
+const TABLE_X = 140;
+const MINE_X = 36;
+const HOME_X = 164;
+const TARGET = { x: 16, y: 64 }; // a block in the left cave wall
 const LEDGE = { x: 224, y: 48 };
 
 const HELD_DIAMOND = (() => {
@@ -310,8 +310,8 @@ export function startScene(canvas, { onDeath, onTags, reduceMotion, skins = {} }
     }
   };
   const ORE_AT = {
-    '32,0': 'coal', '112,0': 'iron', '176,0': 'gold', '48,16': 'iron', '208,16': 'coal',
-    '224,64': 'iron', '240,64': 'redstone', '32,80': 'iron', '144,80': 'coal', '96,48': 'coal', '176,32': 'iron',
+    '16,32': 'coal', '0,48': 'iron', '112,0': 'iron', '176,0': 'gold', '48,16': 'iron', '208,16': 'coal',
+    '224,64': 'iron', '240,64': 'redstone', '64,80': 'iron', '144,80': 'coal', '96,48': 'coal', '176,32': 'iron',
   };
   let seed = 300;
   const pick = (x, y, fallback) => (ORE_AT[`${x},${y}`] ? oreTexture(seed++, ORE_AT[`${x},${y}`]) : texture(seed++, fallback));
@@ -323,25 +323,28 @@ export function startScene(canvas, { onDeath, onTags, reduceMotion, skins = {} }
     if (CEILING[x / 16]) tile(x, 16, pick(x, 16, STONE), 0.3);
   }
   for (let x = 0; x < W; x += 16) tile(x, GROUND, pick(x, GROUND, STONE), 0.1);
+  // Left wall, where crowly digs.
+  for (let y = 16; y < GROUND; y += 16) for (let x = 0; x < 32; x += 16) tile(x, y, pick(x, y, STONE), 0.1);
   // Right wall with a ledge and a dark tunnel above it.
   for (let y = 32; y < GROUND; y += 16) for (let x = LEDGE.x; x < W; x += 16) tile(x, y, pick(x, y, STONE), 0.1);
   // Tunnel: the same rock, deep in shadow, getting darker further in.
   b.save();
   b.beginPath();
-  b.rect(LEDGE.x + 8, 20, W - LEDGE.x - 8, LEDGE.y - 20);
+  b.rect(LEDGE.x, 20, W - LEDGE.x, LEDGE.y - 20);
   b.clip();
   for (let y = 16; y < LEDGE.y; y += 16) for (let x = LEDGE.x; x < W; x += 16) tile(x, y, texture(seed++, DEEP), 0.45);
-  const tg = b.createLinearGradient(LEDGE.x + 8, 0, W, 0);
+  const tg = b.createLinearGradient(LEDGE.x, 0, W, 0);
   tg.addColorStop(0, 'rgba(0,0,0,0)');
   tg.addColorStop(1, 'rgba(0,0,0,0.55)');
   b.fillStyle = tg;
-  b.fillRect(LEDGE.x + 8, 20, W - LEDGE.x - 8, LEDGE.y - 20);
+  b.fillRect(LEDGE.x, 20, W - LEDGE.x, LEDGE.y - 20);
   b.restore();
   b.fillStyle = 'rgba(0,0,0,0.5)';
-  b.fillRect(LEDGE.x + 8, 20, W - LEDGE.x - 8, 2);
+  b.fillRect(LEDGE.x, 20, W - LEDGE.x, 2);
   b.fillStyle = 'rgba(255,255,255,0.12)';
   b.fillRect(LEDGE.x, LEDGE.y, W - LEDGE.x, 1);
-  b.fillRect(0, GROUND, LEDGE.x, 1);
+  b.fillRect(32, GROUND, LEDGE.x - 32, 1);
+  b.fillRect(32, 16, 1, GROUND - 16);
   for (let j = 0; j < 8; j++) {
     for (let i = 0; i < 8; i++) {
       b.fillStyle = tableTex[j * 8 + i];
@@ -384,15 +387,30 @@ export function startScene(canvas, { onDeath, onTags, reduceMotion, skins = {} }
     ctx.globalAlpha = 1;
   }
 
-  function drawTarget(tex, crack) {
+  function drawTarget(tex, crack, recessed = false) {
     for (let j = 0; j < 8; j++) {
       for (let i = 0; i < 8; i++) {
         ctx.fillStyle = tex[j * 8 + i];
         ctx.fillRect(TARGET.x + i * S, TARGET.y + j * S, S, S);
       }
     }
+    if (recessed) {
+      // Sitting one block deeper in the wall: darker, with the hole's edges casting shadow.
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.fillRect(TARGET.x, TARGET.y, 16, 16);
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.fillRect(TARGET.x, TARGET.y, 16, 3);
+      ctx.fillRect(TARGET.x, TARGET.y, 3, 16);
+    }
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     for (const [i, j] of CRACKS[crack]) ctx.fillRect(TARGET.x + i * S, TARGET.y + j * S, S, S);
+  }
+
+  function drawHole() {
+    ctx.fillStyle = '#0d0b0a';
+    ctx.fillRect(TARGET.x, TARGET.y, 16, 16);
+    ctx.fillStyle = '#1a1715';
+    ctx.fillRect(TARGET.x + 3, TARGET.y + 3, 13, 13);
   }
 
   function burst(x, y, colors, n, speed) {
@@ -413,7 +431,7 @@ export function startScene(canvas, { onDeath, onTags, reduceMotion, skins = {} }
     }
   }
 
-  function personPixels(p, x, jy, angle, held, walking, t) {
+  function personPixels(p, x, jy, angle, held, walking, t, flip = false) {
     const top = GROUND - HEIGHT - jy;
     const legTop = top + 8 + TORSO_ROWS.length;
     const sk = p.skin;
@@ -426,7 +444,8 @@ export function startScene(canvas, { onDeath, onTags, reduceMotion, skins = {} }
     grid(sk.head, x + 4, top, px);
     const arm = [];
     rows(sk.armL, TORSO_ROWS).forEach((row, y) => row.forEach((c, i) => c && arm.push([i - 2, y, c])));
-    return px.concat(armSpace(held ? arm.concat(held) : arm, x + 14, top + 9, angle));
+    const all = px.concat(armSpace(held ? arm.concat(held) : arm, x + 14, top + 9, angle));
+    return flip ? all.map(([px2, y, c]) => [2 * (x + 8) - 1 - px2, y, c]) : all;
   }
 
   function hop(t, start) {
@@ -457,7 +476,8 @@ export function startScene(canvas, { onDeath, onTags, reduceMotion, skins = {} }
     ctx.drawImage(bg, 0, 0);
 
     if (t < T.stoneBreak) drawTarget(stoneTex, Math.min(3, Math.floor(t / 0.25)));
-    else if (t < T.oreBreak) drawTarget(oreTex, Math.min(3, Math.floor((t - T.stoneBreak) / 0.3)));
+    else if (t < T.oreBreak) drawTarget(oreTex, Math.min(3, Math.floor((t - T.stoneBreak) / 0.3)), true);
+    else drawHole();
     if (t >= T.stoneBreak && once('stone')) burst(TARGET.x + 8, TARGET.y + 8, STONE, 18, 40);
     if (t >= T.oreBreak && once('ore')) burst(TARGET.x + 8, TARGET.y + 8, ['#5decf5', '#8b8b8b', '#7c7c7c', '#d5ffff'], 20, 40);
 
@@ -496,7 +516,7 @@ export function startScene(canvas, { onDeath, onTags, reduceMotion, skins = {} }
 
     if (t >= T.oreBreak && t < T.pickup) {
       const k = (t - T.oreBreak) / (T.pickup - T.oreBreak);
-      const ix = Math.round(TARGET.x + 4 + (MINE_X + 14 - TARGET.x - 4) * easeOut(k));
+      const ix = Math.round(TARGET.x + 4 + (MINE_X - 4 - TARGET.x - 4) * easeOut(k));
       const iy = Math.round(TARGET.y + 6 - Math.sin(k * Math.PI) * 10);
       put(smallSprite(DIAMOND.rows, DIAMOND.pal, ix, iy));
     }
@@ -516,7 +536,7 @@ export function startScene(canvas, { onDeath, onTags, reduceMotion, skins = {} }
     if (t < T.poof) {
       const actors = [
         { p: forever, px: personPixels(forever, CRAFTER.x, fJump, fAngle, null, false, t), x: CRAFTER.x },
-        { p: crowly, px: personPixels(crowly, cx, cJump, cAngle, cHeld, walking, t), x: cx },
+        { p: crowly, px: personPixels(crowly, cx, cJump, cAngle, cHeld, walking, t, t < T.pickup), x: cx },
       ];
       for (const a of actors) {
         if (!dead) { put(a.px); continue; }
@@ -568,7 +588,7 @@ export function startScene(canvas, { onDeath, onTags, reduceMotion, skins = {} }
           it.vy = -it.vy * 0.35;
           if (Math.abs(it.vy) < 12) { it.settled = true; it.vy = 0; }
         }
-        it.x = Math.max(2, Math.min(LEDGE.x - 10, it.x));
+        it.x = Math.max(34, Math.min(LEDGE.x - 10, it.x));
       }
       const bob = it.settled ? Math.round(Math.sin(t * 3 + it.phase) * 1.5) - 1 : 0;
       const pal = it.item.pal;
